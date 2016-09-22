@@ -10,7 +10,7 @@
  * masters project to investigate the performance portability between OpenCL
  * and Single-Assignment C (http://www.sac-home.org/) programming models.
  *
- * Created by Hans-Nikolai Viessmann (C) 2015
+ * Created by Hans-Nikolai Viessmann (C) 2015 - 2016
  *
  * Following macros are available to manipulate verbose output, set time unit,
  * and specify the clock to be used:
@@ -23,6 +23,10 @@
  */
 #ifndef __TIMER_HEADER_GUARD__
 #define __TIMER_HEADER_GUARD__
+
+#if __cplusplus
+extern "C" {
+#endif
 
 #ifndef TIMERVER
 /* Verbosity level, the following values are considered valid:
@@ -158,5 +162,9 @@ int start(interval * tmp);
 int stop(interval * tmp);
 double elapsed_interval(interval * tmp);
 void print_results(int num, ...);
+
+#if __cplusplus
+}
+#endif
 
 #endif
