@@ -11,10 +11,11 @@
 
 /* Function
  *  internal function to return a human understandable meaning for the
- *  status returns. TODO: needs to be used... ;)
+ *  status returns.
  *
  *  @param: the return status values
- *  @return: the humand understanble string meaning of the status value
+ *
+ *  @return: the human understandable string meaning of the status value
  */
 inline
 char * error_num(int status)
@@ -39,42 +40,46 @@ char * error_num(int status)
 }
 
 /* Function
- *  internal function that interprets the TIMERCLOCK macro and returns the
+ *  internal function that interprets the clock enum and returns the
  *  appropriate system clock.
  *
- *  @return: clockid_t System Clock
+ *  @param ck: clock enum
+ *
+ *  @return: clockid_t system clock
  */
 inline
-clockid_t set_clock()
+clockid_t set_clock(clock_e ck)
 {
     clockid_t clock;
-    switch(TIMERCLOCK)
+    switch(ck)
     {
-        default:
-            ERROR("Invalid TIMERCLOCK value, using CLOCK_REALTIME");
-        case 0:
-            clock = CLOCK_REALTIME;
-            break;
-        case 1:
+        case rtc:
             clock = CLOCK_REALTIME_COARSE;
             break;
-        case 2:
+        case mono:
             clock = CLOCK_MONOTONIC;
             break;
-        case 3:
+        case monoc:
             clock = CLOCK_MONOTONIC_COARSE;
             break;
-        case 4:
+        case monor:
             clock = CLOCK_MONOTONIC_RAW;
             break;
-        case 5:
-            clock = CLOCK_BOOTTIME;
-            break;
-        case 6:
+        case cpup:
             clock = CLOCK_PROCESS_CPUTIME_ID;
             break;
-        case 7:
+        case cput:
             clock = CLOCK_THREAD_CPUTIME_ID;
+            break;
+        case monob:
+#ifdef CLOCK_BOOTTIME
+            clock = CLOCK_BOOTTIME;
+            break;
+#endif
+        default:
+            ERROR("Invalid CLOCK value, using CLOCK_REALTIME");
+        case rt:
+            clock = CLOCK_REALTIME;
             break;
     }
     return clock;
@@ -86,6 +91,7 @@ clockid_t set_clock()
  *
  *  @param start: the fist measured time point
  *  @param end: the final or last measured time point
+ *
  *  @return: struct timespec The difference between start and end
  */
 inline
@@ -112,8 +118,8 @@ struct timespec diff_timespec(struct timespec end, struct timespec begin)
     return result;
 }
 
-/*
- * This is a bit of unnessicary toil, however it does the job...
+/* 
+ * XXX: This is a bit of unnecessary toil, however it does the job...
  * An inline solution would be more practical... but I can't
  * remember how to do it with a struct...
  */
@@ -131,33 +137,34 @@ error:
 }
 
 /* Function
- *  internal function to interpret the TIMERUNIT macro and return the
+ *  internal function to interpret the unit enum and return the
  *  appropriate time unit.
+ *
+ *  @param unit: enum time unit
  *
  *  @return: string The time unit
  */
 inline
-char * unit()
+char * print_unit(unit_e unit)
 {   
-    char * s;
-    switch(TIMERUNIT)
+    switch(unit)
     {
         default:
-            ERROR("Invalid TIMEUNIT value, using seconds (s)");
+            ERROR("Invalid UNIT value, using seconds (s)");
         case 0:
-            s = (char *) "s";
+            return (char *) "s";
             break;
         case 1:
-            s = (char *) "ms";
+            return (char *) "ms";
             break;
         case 2:
-            s = (char *) "us";
+            return (char *) "us";
             break;
         case 3:
-            s = (char *) "ns";
+            return (char *) "ns";
             break;
     }
-    return s;
+    return (char *) "null";
 }
 
 /* Function
@@ -166,19 +173,43 @@ char * unit()
  *
  *  @param tmp: the address of the interval to be allocated
  *  @param name: the name of the interval
+ *  @param ck: clock enum
+ *  @param ut: unit enum
  *
  *  @return: status code
  */
-int create_interval(interval ** tmp, char * name)
+int create_interval(interval_t ** tmp, char * name, clock_e ck, unit_e ut)
 {
-    *tmp = (interval *) malloc(sizeof(interval));
+    *tmp = (interval_t *) malloc(sizeof(interval_t));
     CHECK(!*tmp, "Unable to create interval %s!", name);
     (*tmp)->name = name;
+    (*tmp)->clock = ck;
+    (*tmp)->unit = ut;
     return OK;
     
 error:
     if(*tmp) free(*tmp);
     return NOT_ALLOCATED;
+}
+
+/* Function
+ *  get the current time and save its value in the appropriate pointer
+ *
+ *  @param clock: the system clock to be used
+ *  @param time: the timespec structure that holds the time
+ *
+ *  @return: either OK, or error status from clock_gettime
+ */
+inline
+int get_time(clockid_t clock, struct timespec * time)
+{
+    int ret;
+    ret = clock_gettime(clock, time);
+    CHECK(ret, "Failed to get start time!");
+    return OK;
+
+error:
+    return ret;
 }
 
 /* Function
@@ -188,15 +219,9 @@ error:
  *
  *  @return: either OK, or error status from clock_gettime
  */
-int start(interval * tmp)
+int start(interval_t * tmp)
 {
-    int ret;
-    ret = clock_gettime(set_clock(), &(tmp->start));
-    CHECK(ret, "Failed to get start time!");
-    return OK;
-
-error:
-    return ret;
+    return get_time(set_clock(tmp->clock), &(tmp->start));
 }
 
 /* Function
@@ -206,43 +231,42 @@ error:
  *
  *  @return: either OK, or error status from clock_gettime
  */
-int stop(interval * tmp)
+int stop(interval_t * tmp)
 {
-    int ret;
-    ret = clock_gettime(set_clock(), &(tmp->stop));
-    CHECK(ret, "Failed to get stop time!");
-    return OK;
-
-error:
-    return ret;
+    return get_time(set_clock(tmp->clock), &(tmp->stop));
 }
 
 /* Function
  *  compute the elapsed time from the interval
  *
  *  @param tmp: the interval
+ *  @param ut: unit enum
  *
  *  @return: the elapsed time in the global time unit
  */
 inline
-double elapsed_interval(interval * tmp)
+double elapsed_interval(interval_t * tmp, unit_e ut)
 {
     double time = 0.0;
-    struct timespec diff = diff_timespec(tmp->stop, tmp->start);
-    switch(TIMERUNIT)
+    unit_e unit;
+    struct timespec diff;
+
+    diff = diff_timespec(tmp->stop, tmp->start);
+    unit = 0 <= ut && ut < unit_check ? ut : tmp->unit;
+    switch(unit)
     {
         default:
-            ERROR("Invalid TIMEUNIT value, using seconds (s)");
-        case 0:
+            ERROR("Invalid UNIT value, using seconds (s)");
+        case s:
             time = (double) diff.tv_sec + NANO_TO_SEC(diff.tv_nsec);
             break;
-        case 1:
+        case ms:
             time = (double) SEC_TO_MSEC(diff.tv_sec) + NANO_TO_MSEC(diff.tv_nsec);
             break;
-        case 2:
+        case us:
             time = (double) SEC_TO_MCSEC(diff.tv_sec) + NANO_TO_MCSEC(diff.tv_nsec);
             break;
-        case 3:
+        case ns:
             time = (double) SEC_TO_NSEC(diff.tv_sec) + diff.tv_nsec;
             break;
     }
@@ -262,21 +286,63 @@ void print_results(int num, ...)
     va_list vl;
     char * names[num];
     double values[num];
-    // Not used yet
-    //char * units[num];
+    unit_e units[num];
 
     va_start(vl, num);
     for(int i = 0; i < num; i++)
     {
-        interval * time = va_arg(vl, interval *);
+        interval_t * time = va_arg(vl, interval_t *);
+        units[i] = time->unit;
         names[i] = strdup(time->name);
-        values[i] = elapsed_interval(time);
+        values[i] = elapsed_interval(time, -1);
     }
     va_end(vl);
 
     for(int i = 0; i < num; i++)
     {
-        printf("%s: %.3f %s\n", names[i], values[i], unit());
+        printf("%s: %.3f %s\n", names[i], values[i], print_unit(units[i]));
         free(names[i]);
     }
+} 
+
+/* Function
+ *  this function prints out the elapsed time(s) from the given interval(s).
+ *  Print out is in a CSV compatible format.
+ *
+ *  @param comment: comment character that precedes the headers
+ *  @param num: the number of intervals to be printed
+ *  @param ...: the interval(s)
+ */
+inline
+void print_results_csv(char * comment, int num, ...)
+{
+    va_list vl;
+    char * names[num];
+    double values[num];
+    unit_e units[num];
+
+    va_start(vl, num);
+    for(int i = 0; i < num; i++)
+    {
+        interval_t * time = va_arg(vl, interval_t *);
+        units[i] = time->unit;
+        names[i] = strdup(time->name);
+        values[i] = elapsed_interval(time, -1);
+    }
+    va_end(vl);
+
+    printf("%s ", comment);
+    for(int i = 0; i < num; i++)
+    {
+        printf("%s (%s)", names[i], print_unit(units[i]));
+        free(names[i]);
+        if(i < num - 1) printf(", ");
+    }
+    printf("\n");
+    for(int i = 0; i < num; i++)
+    {
+        printf("%.3f", values[i]);
+        if(i < num - 1) printf(", ");
+    }
+    printf("\n");
 }

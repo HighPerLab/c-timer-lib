@@ -16,16 +16,16 @@ run: test_s.out test_ms.out test_ns.out test_mis.out
 	./test_ns.out
 
 test_s.out: test.c timer.o
-	$(CC) $(CFLAGS) $^ -o $@ -DTIMERUNIT=0
+	$(CC) $(CFLAGS) $^ -o $@ -DUNITS="s"
 
 test_ms.out: test.c timer.o
-	$(CC) $(CFLAGS) $^ -o $@ -DTIMERUNIT=1
+	$(CC) $(CFLAGS) $^ -o $@ -DUNITS="ms"
 
 test_ns.out: test.c timer.o
-	$(CC) $(CFLAGS) $^ -o $@ -DTIMERUNIT=3
+	$(CC) $(CFLAGS) $^ -o $@ -DUNITS="us"
 
 test_mis.out: test.c timer.o
-	$(CC) $(CFLAGS) $^ -o $@ -DTIMERUNIT=2
+	$(CC) $(CFLAGS) $^ -o $@ -DUNITS="ns"
 
 timer.o: timer.c timer.h
 	$(CC) $(CFLAGS) -c $<
