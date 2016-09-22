@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -g -Wall -std=gnu99
+CFLAGS := -g -Wall -Wextra -std=gnu99
 
 .PHONY: all run
 

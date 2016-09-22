@@ -88,7 +88,8 @@ typedef enum
     ms,  // milli-seconds
     us,  // micro-seconds
     ns,  // nano-seconds
-    unit_check // used for enum check
+    unit_check, // used for enum check
+    none // use the intervals unit
 } unit_e;
 
 /* Enum of system clocks */
