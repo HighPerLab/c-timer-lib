@@ -326,7 +326,7 @@ void print_results_csv(char * comment, int num, ...)
     {
         interval_t * time = va_arg(vl, interval_t *);
         units[i] = time->unit;
-        names[i] = strdup(time->name);
+        names[i] = (time->name == NULL) ? NULL : strdup(time->name);
         values[i] = elapsed_interval(time, none);
     }
     va_end(vl);
