@@ -7,6 +7,67 @@
 
 #include "timer.h"
 
+/*
+ * Following macros are available to manipulate verbose output:
+ *  -   TIMERVER -> 0 (off) 1 (print errors: default) 2 (debug)
+ */
+
+#ifndef TIMERVER
+/* Verbosity level, the following values are considered valid:
+ * - 0 : verbosity off
+ * - 1 : error messages
+ * - 2 : debug
+ */
+#define TIMERVER 1
+#endif
+
+/** Macros for verbosity **/
+
+#if TIMERVER > 0
+#define ERROR(message, ...) \
+    fprintf(stderr, \
+            " [ERROR] Timer: (%s:%d) " message "\n" \
+            , __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define ERROR(message, ...)
+#endif
+
+#if TIMERVER > 1
+#define DEBUG(message, ...) \
+    fprintf(stderr, \
+            " [DEBUG] Timer: (%s:%d) " message "\n" \
+            , __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define DEBUG(message, ...)
+#endif
+
+#define CHECK(cond, message, ...) \
+    if((cond)) { ERROR(message, ##__VA_ARGS__); goto error; }
+
+/** Error related **/
+
+#define OK 0
+#define NOT_ALLOCATED -1
+#define CLOCK_FAILED -2
+
+/** Time conversions **/
+
+#define NANO_TO_SEC(time) (time / 1000000000.0)
+#define NANO_TO_MSEC(time) (time / 1000000.0)
+#define NANO_TO_MCSEC(time) (time / 1000.0)
+
+#define MICRO_TO_SEC(time) (time / 1000000.0)
+#define MICRO_TO_MSEC(time) (time / 1000.0)
+#define MICRO_TO_NSEC(time) (time * 1000.0)
+
+#define MILLI_TO_SEC(time) (time / 1000.0)
+#define MILLI_TO_MCSEC(time) (time * 1000.0)
+#define MILLI_TO_NSEC(time) (time * 1000000.0)
+
+#define SEC_TO_MSEC(time) (time * 1000.0)
+#define SEC_TO_MCSEC(time) (time * 1000000.0)
+#define SEC_TO_NSEC(time) (time * 1000000000.0)
+
 /** Functions **/
 
 /* Function
