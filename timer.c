@@ -78,6 +78,7 @@ clockid_t set_clock(clock_e ck)
 #endif
         default:
             ERROR("Invalid CLOCK value, using CLOCK_REALTIME");
+            break;
         case rt:
             clock = CLOCK_REALTIME;
             break;
@@ -118,7 +119,7 @@ struct timespec diff_timespec(struct timespec end, struct timespec begin)
     return result;
 }
 
-/* 
+/*
  * XXX: This is a bit of unnecessary toil, however it does the job...
  * An inline solution would be more practical... but I can't
  * remember how to do it with a struct...
@@ -146,11 +147,12 @@ error:
  */
 inline
 char * print_unit(unit_e unit)
-{   
+{
     switch(unit)
     {
         default:
             ERROR("Invalid UNIT value, using seconds (s)");
+            break;
         case 0:
             return (char *) "s";
             break;
@@ -186,7 +188,7 @@ int create_interval(interval_t ** tmp, char * name, clock_e ck, unit_e ut)
     (*tmp)->clock = ck;
     (*tmp)->unit = ut;
     return OK;
-    
+
 error:
     if(*tmp) free(*tmp);
     return NOT_ALLOCATED;
@@ -257,6 +259,7 @@ double elapsed_interval(interval_t * tmp, unit_e ut)
     {
         default:
             ERROR("Invalid UNIT value, using seconds (s)");
+            break;
         case s:
             time = (double) diff.tv_sec + NANO_TO_SEC(diff.tv_nsec);
             break;
@@ -303,7 +306,7 @@ void print_results(int num, ...)
         printf("%s: %.3f %s\n", names[i], values[i], print_unit(units[i]));
         free(names[i]);
     }
-} 
+}
 
 /* Function
  *  this function prints out the elapsed time(s) from the given interval(s).
