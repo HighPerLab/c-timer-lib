@@ -106,7 +106,7 @@ typedef enum
     rtc,
  /* - CLOCK_REALTIME_COARSE   (Linux only!)
   *       A faster but less precise version of CLOCK_REALTIME. Use when you
-  *       need very fast, but not fine-grained timestamps. 
+  *       need very fast, but not fine-grained timestamps.
   */
     mono,
  /* - CLOCK_MONOTONIC         (Linux only!)
@@ -119,7 +119,7 @@ typedef enum
     monoc,
  /* - CLOCK_MONOTONIC_COARSE  (Linux only!)
   *       A faster but less precise version of CLOCK_MONOTONIC. Use when you
-  *       need very fast, but not fine-grained timestamps. 
+  *       need very fast, but not fine-grained timestamps.
   */
     monor,
  /* - CLOCK_MONOTONIC_RAW     (Linux only!)
@@ -141,12 +141,12 @@ typedef enum
   */
     cput
  /* - CLOCK_THREAD_CPUTIME_ID
-  *       Thread-specific CPU-time clock. 
+  *       Thread-specific CPU-time clock.
   */
 } clock_e;
 
 /* Datatype
- *  struct interval -> 
+ *  struct interval ->
  *   - name -> string
  *   - start -> struct timespec
  *   - stop -> struct timespec
