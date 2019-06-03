@@ -78,7 +78,7 @@ clockid_t set_clock(clock_e ck)
 #endif
         default:
             ERROR("Invalid CLOCK value, using CLOCK_REALTIME");
-            break;
+            /* Fall-through */
         case rt:
             clock = CLOCK_REALTIME;
             break;
@@ -152,7 +152,7 @@ char * print_unit(unit_e unit)
     {
         default:
             ERROR("Invalid UNIT value, using seconds (s)");
-            break;
+            /* Fall-through */
         case 0:
             return (char *) "s";
             break;
@@ -259,7 +259,7 @@ double elapsed_interval(interval_t * tmp, unit_e ut)
     {
         default:
             ERROR("Invalid UNIT value, using seconds (s)");
-            break;
+            /* Fall-through */
         case s:
             time = (double) diff.tv_sec + NANO_TO_SEC(diff.tv_nsec);
             break;

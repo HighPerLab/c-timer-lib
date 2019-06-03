@@ -19,4 +19,4 @@ errors regarding using the `clock_gettime` function.
 # License
 
 This work is unlicensed and part of the public domain, as per
-(The Unlicense)[https://unlicense.org/] license.
+[The Unlicense](https://unlicense.org/) license.
